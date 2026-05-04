@@ -1,3 +1,41 @@
+import sys
+import types
+
+# 1. Fix imghdr removal
+if 'imghdr' not in sys.modules:
+    imghdr = types.ModuleType('imghdr')
+    imghdr.what = lambda file, h=None: None
+    sys.modules['imghdr'] = imghdr
+
+# 2. Fix the 'six.moves' vendor error
+try:
+    import six
+    import http.client
+    vendor_six = types.ModuleType('six')
+    vendor_six.moves = types.ModuleType('moves')
+    vendor_six.moves.http_client = http.client
+    sys.modules['telegram.vendor.ptb_urllib3.urllib3.packages.six'] = vendor_six
+    sys.modules['telegram.vendor.ptb_urllib3.urllib3.packages.six.moves'] = vendor_six.moves
+    sys.modules['telegram.vendor.ptb_urllib3.urllib3.packages.six.moves.http_client'] = http.client
+except ImportError:
+    pass
+
+# 3. Fix the 'urllib3.contrib.appengine' and its missing attributes
+import urllib3
+if not hasattr(urllib3, 'contrib'):
+    urllib3.contrib = types.ModuleType('contrib')
+
+# Create a more robust dummy appengine module
+appengine = types.ModuleType('appengine')
+appengine.is_appengine_sandbox = lambda: False  # Tell the library we are NOT on AppEngine
+appengine.is_appengine = lambda: False
+appengine.AppEngineManager = None
+
+sys.modules['urllib3.contrib.appengine'] = appengine
+urllib3.contrib.appengine = appengine
+
+# Now proceed with imports
+# ... the rest of your code
 
 
 import logging
