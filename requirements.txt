@@ -1,0 +1,4 @@
+python-telegram-bot==13.5
+urllib3<2.0.0
+six
+apscheduler==3.6.3
