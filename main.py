@@ -1,13 +1,13 @@
 import sys
 import types
 
-# 1. Fix imghdr removal
+# 1. Fix imghdr removal (Python 3.13)
 if 'imghdr' not in sys.modules:
     imghdr = types.ModuleType('imghdr')
     imghdr.what = lambda file, h=None: None
     sys.modules['imghdr'] = imghdr
 
-# 2. Fix the 'six.moves' vendor error
+# 2. Fix 'six.moves' vendor error
 try:
     import six
     import http.client
@@ -20,22 +20,32 @@ try:
 except ImportError:
     pass
 
-# 3. Fix the 'urllib3.contrib.appengine' and its missing attributes
+# 3. Fix 'urllib3.contrib.appengine'
 import urllib3
 if not hasattr(urllib3, 'contrib'):
     urllib3.contrib = types.ModuleType('contrib')
-
-# Create a more robust dummy appengine module
 appengine = types.ModuleType('appengine')
-appengine.is_appengine_sandbox = lambda: False  # Tell the library we are NOT on AppEngine
+appengine.is_appengine_sandbox = lambda: False
 appengine.is_appengine = lambda: False
 appengine.AppEngineManager = None
-
 sys.modules['urllib3.contrib.appengine'] = appengine
 urllib3.contrib.appengine = appengine
 
-# Now proceed with imports
-# ... the rest of your code
+# 4. Fix 'pkg_resources' removal (The New Error)
+if 'pkg_resources' not in sys.modules:
+    pkg_res = types.ModuleType('pkg_resources')
+    
+    # Define the functions the library is looking for
+    def get_distribution(package):
+        # Return a dummy object that has a 'version' attribute
+        return type('Obj', (object,), {'version': '13.5'})
+    
+    pkg_res.get_distribution = get_distribution
+    pkg_res.DistributionNotFound = Exception
+    sys.modules['pkg_resources'] = pkg_res
+
+# Now proceed with your imports
+
 
 
 import logging
