@@ -31,20 +31,26 @@ appengine.AppEngineManager = None
 sys.modules['urllib3.contrib.appengine'] = appengine
 urllib3.contrib.appengine = appengine
 
-# 4. Fix 'pkg_resources' removal (The New Error)
+# 4. Fix 'pkg_resources' and 'iter_entry_points' for APScheduler
 if 'pkg_resources' not in sys.modules:
     pkg_res = types.ModuleType('pkg_resources')
     
-    # Define the functions the library is looking for
+    # Mock get_distribution for version checks
     def get_distribution(package):
-        # Return a dummy object that has a 'version' attribute
         return type('Obj', (object,), {'version': '13.5'})
     
+    # Mock iter_entry_points so APScheduler doesn't crash
+    def iter_entry_points(group, name=None):
+        return [] # Return empty list so it finds no external plugins
+    
     pkg_res.get_distribution = get_distribution
+    pkg_res.iter_entry_points = iter_entry_points
     pkg_res.DistributionNotFound = Exception
     sys.modules['pkg_resources'] = pkg_res
 
 # Now proceed with your imports
+
+
 
 
 
